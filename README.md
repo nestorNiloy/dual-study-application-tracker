@@ -69,23 +69,17 @@ A full-stack web application to track and manage dual study program applications
 ---
 
 ## 🏗️ Architecture
-[ Browser / Frontend ]
-│  HTTP Requests
-▼
-┌────────────────────────────────────┐
-│  Controller Layer                  │  ← HTTP routing, input validation
-│  ApplicationController.java        │
-├────────────────────────────────────┤
-│  Service Layer                     │  ← Business logic
-│  ApplicationService (interface)    │
-│  ApplicationServiceImpl            │
-├────────────────────────────────────┤
-│  Repository Layer                  │  ← JpaRepository + derived queries
-│  ApplicationRepository.java        │
-└──────────────┬─────────────────────┘
-│
-▼
-[ applications.db ]   ← SQLite file, auto-created on first run
+
+3-layer enterprise architecture:
+
+**Controller Layer** → handles HTTP requests and input validation
+
+**Service Layer** → contains all business logic
+
+**Repository Layer** → manages database operations via JPA
+
+**Database** → SQLite file, auto-created on first run
+
 ---
 
 ## 📊 Data Model
@@ -134,18 +128,17 @@ The server starts at **http://localhost:8080**
 ---
 
 ## 📁 Project Structure
-dual-study-application-tracker/
-├── backend/
-│   ├── src/main/java/com/dhbw/tracker/
-│   │   ├── controller/        ← REST endpoints
-│   │   ├── service/           ← Business logic
-│   │   ├── repository/        ← Database layer
-│   │   ├── model/             ← Data models
-│   │   └── exception/         ← Error handling
-│   └── src/main/resources/
-│       └── application.properties
-└── frontend/
-└── index.html             ← Dashboard UI
+
+**Backend** (`/backend/src/main/java/com/dhbw/tracker/`)
+- `controller/` — REST endpoints
+- `service/` — Business logic
+- `repository/` — Database layer
+- `model/` — Data models
+- `exception/` — Error handling
+
+**Frontend** (`/frontend/`)
+- `index.html` — Full dashboard UI
+
 ---
 
 ## ⚠️ Error Handling
