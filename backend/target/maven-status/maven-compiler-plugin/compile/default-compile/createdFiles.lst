@@ -1,0 +1,10 @@
+com\dhbw\tracker\model\Application.class
+com\dhbw\tracker\service\ApplicationService.class
+com\dhbw\tracker\service\ApplicationServiceImpl.class
+com\dhbw\tracker\exception\ErrorResponse.class
+com\dhbw\tracker\model\ApplicationStatus.class
+com\dhbw\tracker\repository\ApplicationRepository.class
+com\dhbw\tracker\ApplicationTrackerApplication.class
+com\dhbw\tracker\exception\ResourceNotFoundException.class
+com\dhbw\tracker\controller\ApplicationController.class
+com\dhbw\tracker\exception\GlobalExceptionHandler.class

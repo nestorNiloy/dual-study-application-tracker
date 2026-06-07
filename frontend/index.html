@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DualTrack — Application Command Center</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Syne', 'sans-serif'],
+            mono: ['DM Mono', 'monospace'],
+            body: ['DM Sans', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              850: '#0f172a',
+              950: '#020817',
+            }
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 0.5s ease forwards',
+            'fade-in': 'fadeIn 0.4s ease forwards',
+            'slide-in': 'slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+            'shimmer': 'shimmer 2s linear infinite',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(16px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideIn: {
+              '0%': { opacity: '0', transform: 'translateX(-12px)' },
+              '100%': { opacity: '1', transform: 'translateX(0)' },
+            },
+            pulseSoft: {
+              '0%, 100%': { opacity: '1' },
+              '50%': { opacity: '0.5' },
+            },
+            shimmer: {
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: #020817;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    .glass {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    .glass-light {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(71, 85, 105, 0.3);
+    }
+
+    .card-hover {
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.3);
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+    }
+
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .input-field {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      color: #e2e8f0;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      outline: none;
+      width: 100%;
+      border-radius: 0.5rem;
+      padding: 0.625rem 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+    }
+    .input-field:focus {
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+      background: rgba(15, 23, 42, 0.95);
+    }
+    .input-field::placeholder { color: #475569; }
+
+    select.input-field option {
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .btn-primary:hover::before { opacity: 1; }
+    .btn-primary:hover { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); box-shadow: none; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.08);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      color: #fb7185;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-danger:hover {
+      background: rgba(244, 63, 94, 0.16);
+      border-color: rgba(244, 63, 94, 0.4);
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.12);
+    }
+
+    .row-item {
+      animation: fadeInUp 0.35s ease forwards;
+      opacity: 0;
+    }
+
+    .row-item:nth-child(1)  { animation-delay: 0.03s; }
+    .row-item:nth-child(2)  { animation-delay: 0.06s; }
+    .row-item:nth-child(3)  { animation-delay: 0.09s; }
+    .row-item:nth-child(4)  { animation-delay: 0.12s; }
+    .row-item:nth-child(5)  { animation-delay: 0.15s; }
+    .row-item:nth-child(6)  { animation-delay: 0.18s; }
+    .row-item:nth-child(7)  { animation-delay: 0.21s; }
+    .row-item:nth-child(8)  { animation-delay: 0.24s; }
+    .row-item:nth-child(9)  { animation-delay: 0.27s; }
+    .row-item:nth-child(10) { animation-delay: 0.30s; }
+
+    .delete-loading {
+      animation: pulseSoft 0.8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .toast {
+      animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .toast.hide {
+      animation: fadeIn 0.3s ease reverse forwards;
+    }
+
+    .empty-state {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    .shimmer-line {
+      background: linear-gradient(90deg, #1e293b 25%, #2d3f55 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s linear infinite;
+      border-radius: 4px;
+    }
+
+    .filter-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.75rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+    .filter-btn.active-all       { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.35); color: #a5b4fc; }
+    .filter-btn.active-applied   { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.35); color: #93c5fd; }
+    .filter-btn.active-interviewing { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35); color: #d8b4fe; }
+    .filter-btn.active-offered   { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.35); color: #6ee7b7; }
+    .filter-btn.active-rejected  { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.35); color: #fda4af; }
+    .filter-btn.inactive {
+      background: rgba(30, 41, 59, 0.4);
+      border-color: rgba(51, 65, 85, 0.4);
+      color: #64748b;
+    }
+    .filter-btn.inactive:hover { color: #94a3b8; border-color: rgba(71, 85, 105, 0.6); }
+
+    .header-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), rgba(16, 185, 129, 0.3), transparent);
+    }
+
+    /* Diagonal accent on header */
+    .header-accent {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(135deg, transparent 30%, rgba(99, 102, 241, 0.03) 100%);
+      pointer-events: none;
+    }
+
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #10b981);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+      animation: pulseSoft 2.5s ease-in-out infinite;
+    }
+
+    /* Table striping */
+    .table-row:nth-child(even) { background: rgba(15, 23, 42, 0.3); }
+    .table-row { transition: background 0.15s ease; }
+    .table-row:hover { background: rgba(99, 102, 241, 0.04) !important; }
+
+    /* Form section label */
+    .form-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+
+    /* Grid lines texture overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(99, 102, 241, 0.015) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(99, 102, 241, 0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    main, header, footer { position: relative; z-index: 1; }
+
+    .notes-truncate {
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 1024px) {
+      .notes-truncate { max-width: 120px; }
+    }
+
+    #toast-container {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Header -->
+<header class="glass sticky top-0 z-50">
+  <div class="header-accent"></div>
+  <div class="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
+    <!-- Logo -->
+    <div class="flex items-center gap-3">
+      <div class="logo-dot"></div>
+      <span class="font-display text-xl font-800 tracking-tight text-slate-100" style="font-family:'Syne',sans-serif; font-weight:800; letter-spacing:-0.02em;">
+        Dual<span class="text-indigo-400">Track</span>
+      </span>
+      <span class="hidden sm:block font-mono text-xs text-slate-500 ml-2 border border-slate-700/60 rounded px-2 py-0.5">v1.0</span>
+    </div>
+
+    <!-- Right side: last updated -->
+    <div class="flex items-center gap-3 text-xs font-mono text-slate-500">
+      <span id="last-updated" class="hidden sm:block">—</span>
+      <button id="refresh-btn" onclick="loadApplications()" title="Refresh data"
+        class="glass-light rounded-lg px-3 py-1.5 text-slate-400 hover:text-indigo-400 transition-colors duration-200 flex items-center gap-1.5 text-xs font-mono">
+        <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+  <div class="header-line"></div>
+</header>
+
+<main class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+  <!-- Stats Row -->
+  <section id="stats-section" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <!-- Total -->
+    <div class="stat-card glass rounded-xl p-4 sm:p-5 card-hover cursor-default">
+      <p class="form-label mb-2">Total</p>
+      <div class="flex items-end justify-between">
+        <span id="stat-total" class="font-display text-3xl font-800 text-slate-100" style="font-family:'Syne',sans-serif; font-weight:800;">—</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-slate-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>
+      </div>
+      <p class="text-xs text-slate-500 mt-1 font-body">Applications</p>
+    </div>
+    <!-- Applied -->
+    <div class="stat-card glass rounded-xl p-4 sm:p-5 card-hover cursor-default">
+      <p class="form-label mb-2" style="color:#3b82f6; opacity:0.7;">Applied</p>
+      <div class="flex items-end justify-between">
+        <span id="stat-applied" class="font-display text-3xl font-800 text-blue-400" style="font-family:'Syne',sans-serif; font-weight:800;">—</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-blue-500/30" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+      </div>
+      <p class="text-xs text-slate-500 mt-1 font-body">Submitted</p>
+    </div>
+    <!-- Interviewing -->
+    <div class="stat-card glass rounded-xl p-4 sm:p-5 card-hover cursor-default">
+      <p class="form-label mb-2" style="color:#a855f7; opacity:0.7;">Interviewing</p>
+      <div class="flex items-end justify-between">
+        <span id="stat-interviewing" class="font-display text-3xl font-800 text-purple-400" style="font-family:'Syne',sans-serif; font-weight:800;">—</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-purple-500/30" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2"/><rect width="18" height="18" x="3" y="4" rx="2"/><circle cx="12" cy="10" r="2"/><line x1="8" x2="8" y1="2" y2="4"/><line x1="16" x2="16" y1="2" y2="4"/></svg>
+      </div>
+      <p class="text-xs text-slate-500 mt-1 font-body">In Progress</p>
+    </div>
+    <!-- Offers -->
+    <div class="stat-card glass rounded-xl p-4 sm:p-5 card-hover cursor-default">
+      <p class="form-label mb-2" style="color:#10b981; opacity:0.7;">Offered</p>
+      <div class="flex items-end justify-between">
+        <span id="stat-offered" class="font-display text-3xl font-800 text-emerald-400" style="font-family:'Syne',sans-serif; font-weight:800;">—</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-emerald-500/30" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+      </div>
+      <p class="text-xs text-slate-500 mt-1 font-body">Offers Received</p>
+    </div>
+  </section>
+
+  <!-- Main Content: Form + Table -->
+  <div class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-5">
+
+    <!-- LEFT: Add Application Form -->
+    <aside>
+      <div class="glass rounded-2xl p-5 sm:p-6 sticky top-20">
+        <div class="flex items-center gap-2.5 mb-5">
+          <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          </div>
+          <h2 class="font-display font-700 text-slate-200 text-base" style="font-family:'Syne',sans-serif; font-weight:700;">New Application</h2>
+        </div>
+
+        <form id="application-form" novalidate>
+          <div class="space-y-4">
+
+            <div>
+              <label class="form-label" for="company">Company</label>
+              <input type="text" id="company" class="input-field" placeholder="e.g. SAP, Siemens, BMW…" autocomplete="off" />
+            </div>
+
+            <div>
+              <label class="form-label" for="position">Position</label>
+              <input type="text" id="position" class="input-field" placeholder="e.g. Software Engineer (dual)" autocomplete="off" />
+            </div>
+
+            <div>
+              <label class="form-label" for="status">Status</label>
+              <select id="status" class="input-field" style="appearance:none; background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\"); background-repeat:no-repeat; background-position: right 0.75rem center; padding-right:2.5rem;">
+                <option value="APPLIED">Applied</option>
+                <option value="INTERVIEWING">Interviewing</option>
+                <option value="OFFERED">Offered</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label" for="applicationDate">Application Date</label>
+              <input type="date" id="applicationDate" class="input-field" style="color-scheme:dark;" />
+            </div>
+
+            <div>
+              <label class="form-label" for="notes">Notes <span class="text-slate-600 normal-case" style="font-family:'DM Sans',sans-serif; text-transform:none; font-size:0.7rem;">(optional)</span></label>
+              <textarea id="notes" class="input-field resize-none" rows="3" placeholder="Referral, deadline, contact person…"></textarea>
+            </div>
+
+            <button type="submit" id="submit-btn" class="btn-primary w-full rounded-xl py-2.5 text-sm flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              <span id="submit-text">Add Application</span>
+              <span id="submit-spinner" class="hidden spinner"></span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Quick Tips -->
+        <div class="mt-5 pt-4 border-t border-slate-700/40">
+          <p class="text-xs text-slate-600 font-mono leading-relaxed">
+            <span class="text-slate-500">// backend target</span><br/>
+            <span class="text-indigo-400/70">localhost</span><span class="text-slate-500">:8080</span><span class="text-emerald-400/60">/api/applications</span>
+          </p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT: Applications Table -->
+    <section class="min-w-0">
+      <div class="glass rounded-2xl overflow-hidden">
+
+        <!-- Table Header Bar -->
+        <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/40">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-slate-700/40 border border-slate-600/30 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg>
+            </div>
+            <h2 class="font-display font-700 text-slate-200 text-base" style="font-family:'Syne',sans-serif; font-weight:700;">
+              Applications
+              <span id="record-count" class="ml-2 font-mono text-xs font-normal text-slate-500"></span>
+            </h2>
+          </div>
+
+          <!-- Filter Tabs -->
+          <div class="flex flex-wrap items-center gap-1.5" id="filter-bar">
+            <button class="filter-btn active-all" data-filter="ALL">All</button>
+            <button class="filter-btn inactive" data-filter="APPLIED">Applied</button>
+            <button class="filter-btn inactive" data-filter="INTERVIEWING">Interviewing</button>
+            <button class="filter-btn inactive" data-filter="OFFERED">Offered</button>
+            <button class="filter-btn inactive" data-filter="REJECTED">Rejected</button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-700/40">
+                <th class="px-5 py-3 text-left font-mono text-xs uppercase tracking-widest text-slate-500 font-normal whitespace-nowrap">#</th>
+                <th class="px-5 py-3 text-left font-mono text-xs uppercase tracking-widest text-slate-500 font-normal whitespace-nowrap">Company</th>
+                <th class="px-5 py-3 text-left font-mono text-xs uppercase tracking-widest text-slate-500 font-normal whitespace-nowrap">Position</th>
+                <th class="px-5 py-3 text-left font-mono text-xs uppercase tracking-widest text-slate-500 font-normal whitespace-nowrap">Status</th>
+                <th class="px-5 py-3 text-left font-mono text-xs uppercase tracking-widest text-slate-500 font-normal whitespace-nowrap hidden md:table-cell">Date</th>
+                <th class="px-5 py-3 text-left font-mono text-xs uppercase tracking-widest text-slate-500 font-normal whitespace-nowrap hidden lg:table-cell">Notes</th>
+                <th class="px-5 py-3 text-center font-mono text-xs uppercase tracking-widest text-slate-500 font-normal whitespace-nowrap">Del</th>
+              </tr>
+            </thead>
+            <tbody id="applications-table-body">
+              <!-- Skeleton loader rows -->
+              <tr class="table-row border-b border-slate-700/20">
+                <td colspan="7" class="px-5 py-8">
+                  <div class="space-y-3">
+                    <div class="shimmer-line h-4 w-full max-w-lg"></div>
+                    <div class="shimmer-line h-4 w-full max-w-md"></div>
+                    <div class="shimmer-line h-4 w-full max-w-xl"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state (hidden by default) -->
+        <div id="empty-state" class="hidden px-5 py-16 text-center empty-state">
+          <div class="w-14 h-14 rounded-2xl bg-slate-800/60 border border-slate-700/40 flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          </div>
+          <p class="font-display text-slate-400 font-600 mb-1" style="font-family:'Syne',sans-serif; font-weight:600;" id="empty-title">No applications yet</p>
+          <p class="text-xs text-slate-600 font-mono" id="empty-sub">Add your first application using the form →</p>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="max-w-screen-2xl mx-auto px-6 py-5 mt-4 border-t border-slate-800/60">
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-slate-600">
+    <span>DualTrack — Dual Study Application Tracker</span>
+    <span>REST → <span class="text-emerald-600/70">localhost:8080</span>/api/applications</span>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* ─── Config ─────────────────────────────────────── */
+  const API_BASE = 'http://localhost:8080/api/applications';
+
+  /* ─── State ──────────────────────────────────────── */
+  let allApplications = [];
+  let activeFilter = 'ALL';
+
+  /* ─── DOM refs ───────────────────────────────────── */
+  const tableBody    = document.getElementById('applications-table-body');
+  const emptyState   = document.getElementById('empty-state');
+  const form         = document.getElementById('application-form');
+  const submitBtn    = document.getElementById('submit-btn');
+  const submitText   = document.getElementById('submit-text');
+  const submitSpinner = document.getElementById('submit-spinner');
+  const filterBar    = document.getElementById('filter-bar');
+  const recordCount  = document.getElementById('record-count');
+  const lastUpdated  = document.getElementById('last-updated');
+  const refreshIcon  = document.getElementById('refresh-icon');
+
+  /* ─── Status Config ──────────────────────────────── */
+  const STATUS_CFG = {
+    APPLIED:      { label: 'Applied',      cls: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' },
+    INTERVIEWING: { label: 'Interviewing', cls: 'bg-purple-500/10 text-purple-400 border border-purple-500/20' },
+    OFFERED:      { label: 'Offered',      cls: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
+    REJECTED:     { label: 'Rejected',     cls: 'bg-rose-500/10 text-rose-400 border border-rose-500/20' },
+  };
+
+  const FILTER_ACTIVE_CLS = {
+    ALL:          'active-all',
+    APPLIED:      'active-applied',
+    INTERVIEWING: 'active-interviewing',
+    OFFERED:      'active-offered',
+    REJECTED:     'active-rejected',
+  };
+
+  /* ─── Toast Notifications ────────────────────────── */
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const colors = {
+      success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+      error:   'border-rose-500/30 bg-rose-500/10 text-rose-300',
+      warn:    'border-amber-500/30 bg-amber-500/10 text-amber-300',
+      info:    'border-indigo-500/30 bg-indigo-500/10 text-indigo-300',
+    };
+    const icons = {
+      success: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>`,
+      error:   `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+      warn:    `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      info:    `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-xl border backdrop-blur-sm shadow-xl max-w-xs text-sm font-body ${colors[type] || colors.info}`;
+    toast.innerHTML = `<span class="mt-0.5 flex-shrink-0">${icons[type] || icons.info}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 350);
+    }, 4200);
+  }
+
+  /* ─── Stats ──────────────────────────────────────── */
+  function updateStats(apps) {
+    const counts = { APPLIED: 0, INTERVIEWING: 0, OFFERED: 0, REJECTED: 0 };
+    apps.forEach(a => { if (counts[a.status] !== undefined) counts[a.status]++; });
+
+    document.getElementById('stat-total').textContent       = apps.length;
+    document.getElementById('stat-applied').textContent     = counts.APPLIED;
+    document.getElementById('stat-interviewing').textContent = counts.INTERVIEWING;
+    document.getElementById('stat-offered').textContent     = counts.OFFERED;
+  }
+
+  /* ─── Render Table ───────────────────────────────── */
+  function renderTable(apps) {
+    const filtered = activeFilter === 'ALL' ? apps : apps.filter(a => a.status === activeFilter);
+
+    // update record count label
+    if (filtered.length === apps.length) {
+      recordCount.textContent = `(${apps.length})`;
+    } else {
+      recordCount.textContent = `(${filtered.length} / ${apps.length})`;
+    }
+
+    tableBody.innerHTML = '';
+
+    if (filtered.length === 0) {
+      emptyState.classList.remove('hidden');
+      if (apps.length > 0) {
+        document.getElementById('empty-title').textContent = 'No matches for this filter';
+        document.getElementById('empty-sub').textContent   = 'Try selecting a different status above';
+      } else {
+        document.getElementById('empty-title').textContent = 'No applications yet';
+        document.getElementById('empty-sub').textContent   = 'Add your first application using the form →';
+      }
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+
+    filtered.forEach((app, index) => {
+      const cfg     = STATUS_CFG[app.status] || STATUS_CFG.APPLIED;
+      const dateStr = app.applicationDate
+        ? new Date(app.applicationDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : '—';
+      const notes   = app.notes ? escapeHtml(app.notes) : '<span class="text-slate-600">—</span>';
+
+      const tr = document.createElement('tr');
+      tr.className = 'table-row border-b border-slate-700/20 row-item';
+      tr.dataset.id = app.id;
+      tr.innerHTML = `
+        <td class="px-5 py-3.5 font-mono text-xs text-slate-600">${app.id ?? index + 1}</td>
+        <td class="px-5 py-3.5">
+          <span class="font-display font-600 text-slate-200 text-sm" style="font-family:'Syne',sans-serif; font-weight:600;">${escapeHtml(app.company)}</span>
+        </td>
+        <td class="px-5 py-3.5 text-slate-300 text-sm">${escapeHtml(app.position)}</td>
+        <td class="px-5 py-3.5">
+          <span class="inline-flex items-center gap-1.5 text-xs font-mono font-500 rounded-full px-2.5 py-0.5 ${cfg.cls}" style="white-space:nowrap;">
+            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:currentColor; opacity:0.7;"></span>
+            ${cfg.label}
+          </span>
+        </td>
+        <td class="px-5 py-3.5 font-mono text-xs text-slate-400 hidden md:table-cell whitespace-nowrap">${dateStr}</td>
+        <td class="px-5 py-3.5 text-xs text-slate-500 hidden lg:table-cell">
+          <span class="notes-truncate block" title="${escapeHtml(app.notes || '')}">${notes}</span>
+        </td>
+        <td class="px-5 py-3.5 text-center">
+          <button class="btn-danger delete-btn" data-id="${app.id}" title="Delete application" aria-label="Delete ${escapeHtml(app.company)}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          </button>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  /* ─── Load Applications ──────────────────────────── */
+  async function loadApplications() {
+    refreshIcon.style.animation = 'spin 0.7s linear infinite';
+    refreshIcon.style.display   = 'inline';
+
+    try {
+      const res  = await fetch(API_BASE);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      const data = await res.json();
+
+      allApplications = Array.isArray(data) ? data : (data.content ?? data._embedded?.applicationList ?? []);
+      updateStats(allApplications);
+      renderTable(allApplications);
+
+      const now = new Date();
+      lastUpdated.textContent = `Updated ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+
+    } catch (err) {
+      console.error('Load failed:', err);
+      tableBody.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      document.getElementById('empty-title').textContent = 'Could not reach backend';
+      document.getElementById('empty-sub').textContent   = 'Make sure the server is running at localhost:8080';
+
+      showToast(
+        'Cannot connect to the backend. Ensure the server is running at <strong>localhost:8080</strong>.',
+        'error'
+      );
+
+      // Reset stats to dashes
+      ['stat-total','stat-applied','stat-interviewing','stat-offered'].forEach(id => {
+        document.getElementById(id).textContent = '—';
+      });
+      recordCount.textContent = '';
+    } finally {
+      refreshIcon.style.animation = '';
+    }
+  }
+
+  /* ─── Submit Form ────────────────────────────────── */
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const company         = document.getElementById('company').value.trim();
+    const position        = document.getElementById('position').value.trim();
+    const status          = document.getElementById('status').value;
+    const applicationDate = document.getElementById('applicationDate').value;
+    const notes           = document.getElementById('notes').value.trim();
+
+    // Validation
+    const errors = [];
+    if (!company)  errors.push('Company name is required.');
+    if (!position) errors.push('Position is required.');
+    if (!applicationDate) errors.push('Application date is required.');
+
+    if (errors.length > 0) {
+      errors.forEach(msg => showToast(msg, 'warn'));
+      if (!company)         document.getElementById('company').focus();
+      else if (!position)   document.getElementById('position').focus();
+      else                  document.getElementById('applicationDate').focus();
+      return;
+    }
+
+    // Loading state
+    submitBtn.disabled      = true;
+    submitText.textContent  = 'Saving…';
+    submitSpinner.classList.remove('hidden');
+
+    const payload = { company, position, status, applicationDate, notes };
+
+    try {
+      const res = await fetch(API_BASE, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errBody || res.statusText}`);
+      }
+
+      form.reset();
+      document.getElementById('applicationDate').value = '';
+      showToast(`Application to <strong>${escapeHtml(company)}</strong> added successfully.`, 'success');
+      await loadApplications();
+
+    } catch (err) {
+      console.error('Create failed:', err);
+      showToast(`Failed to save application: ${err.message}. Check backend connection.`, 'error');
+    } finally {
+      submitBtn.disabled      = false;
+      submitText.textContent  = 'Add Application';
+      submitSpinner.classList.add('hidden');
+    }
+  });
+
+  /* ─── Delete Application ─────────────────────────── */
+  tableBody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.delete-btn');
+    if (!btn) return;
+
+    const id  = btn.dataset.id;
+    const row = tableBody.querySelector(`tr[data-id="${id}"]`);
+    const app = allApplications.find(a => String(a.id) === String(id));
+    const companyName = app ? app.company : `#${id}`;
+
+    // Optimistic loading state on row
+    btn.classList.add('delete-loading');
+    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" opacity="0.3"/><path d="M21 12a9 9 0 0 1-9 9"/></svg>`;
+
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+      if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+
+      // Animate row out
+      if (row) {
+        row.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        row.style.opacity    = '0';
+        row.style.transform  = 'translateX(8px)';
+        setTimeout(() => row.remove(), 260);
+      }
+
+      showToast(`Application at <strong>${escapeHtml(companyName)}</strong> deleted.`, 'info');
+      allApplications = allApplications.filter(a => String(a.id) !== String(id));
+      updateStats(allApplications);
+
+      // Delay re-render slightly so row animates out cleanly
+      setTimeout(() => renderTable(allApplications), 280);
+
+    } catch (err) {
+      console.error('Delete failed:', err);
+      btn.classList.remove('delete-loading');
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`;
+      showToast(`Failed to delete application. ${err.message}`, 'error');
+    }
+  });
+
+  /* ─── Filter Bar ─────────────────────────────────── */
+  filterBar.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+
+    activeFilter = btn.dataset.filter;
+
+    // Update button states
+    filterBar.querySelectorAll('.filter-btn').forEach(b => {
+      const f = b.dataset.filter;
+      b.className = 'filter-btn ' + (f === activeFilter ? FILTER_ACTIVE_CLS[f] : 'inactive');
+    });
+
+    renderTable(allApplications);
+  });
+
+  /* ─── Utility ────────────────────────────────────── */
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /* ─── Set default date to today ──────────────────── */
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('applicationDate').value = today;
+
+  /* ─── Initial load ───────────────────────────────── */
+  loadApplications();
+
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>
