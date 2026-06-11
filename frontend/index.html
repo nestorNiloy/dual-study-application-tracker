@@ -754,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
     submitText.textContent  = 'Saving…';
     submitSpinner.classList.remove('hidden');
 
-    const payload = { company, position, status, applicationDate, notes };
+    const payload = { companyName: company, positionTitle: position, status, applicationDate, notes };
 
     try {
       const res = await fetch(API_BASE, {
