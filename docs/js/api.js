@@ -4,7 +4,7 @@
  * Talks to the Spring Boot REST API at API_BASE.
  */
 
-const API_BASE = 'https://dual-study-application-tracker-production.up.railway.app/api/applications';
+const API_BASE = 'https://dual-study-application-tracker.onrender.com/api/applications';
 
 const api = {
 
